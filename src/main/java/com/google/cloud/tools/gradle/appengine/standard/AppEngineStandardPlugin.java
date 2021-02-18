@@ -57,8 +57,6 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
   private CloudSdkOperations cloudSdkOperations;
   private AppEngineStandardExtension appengineExtension;
   private AppEngineCorePluginConfiguration appEngineCorePluginConfiguration;
-  private RunExtension runExtension;
-  private StageStandardExtension stageExtension;
   private File explodedWarDir;
 
   @Override
@@ -83,15 +81,14 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
   }
 
   private void configureExtensions() {
-
     // create the run extension and set defaults.
-    runExtension = appengineExtension.getRun();
+    RunExtension runExtension = appengineExtension.getRun();
     runExtension.setStartSuccessTimeout(20);
     runExtension.setServices(explodedWarDir);
     runExtension.setServerVersion("1");
 
     // create the stage extension and set defaults.
-    stageExtension = appengineExtension.getStage();
+    StageStandardExtension stageExtension = appengineExtension.getStage();
     File defaultStagedAppDir = new File(project.getBuildDir(), STAGED_APP_DIR_NAME);
     stageExtension.setSourceDirectory(explodedWarDir);
     stageExtension.setStagingDirectory(defaultStagedAppDir);
@@ -177,16 +174,12 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
               task.setGroup(APP_ENGINE_STANDARD_TASK_GROUP);
               task.setDescription(
                   "Stage an App Engine standard environment application for deployment");
+              task.setStageStandardExtension(appengineExtension.getStage());
               task.dependsOn(BasePlugin.ASSEMBLE_TASK_NAME);
             });
 
     project.afterEvaluate(
-        project ->
-            stage.configure(
-                task -> {
-                  task.setAppCfg(cloudSdkOperations.getAppcfg());
-                  task.setStageStandardExtension(stageExtension);
-                }));
+        project -> stage.configure(task -> task.setAppCfg(cloudSdkOperations.getAppcfg())));
 
     // All deployment tasks depend on the stage task.
     Arrays.asList(
@@ -209,6 +202,7 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
             runTask -> {
               runTask.setGroup(APP_ENGINE_STANDARD_TASK_GROUP);
               runTask.setDescription("Run an App Engine standard environment application locally");
+              runTask.setRunConfig(appengineExtension.getRun());
               runTask.dependsOn(tasks.named(BasePlugin.ASSEMBLE_TASK_NAME));
             });
 
@@ -221,6 +215,9 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
               startTask.setDescription(
                   "Run an App Engine standard environment application locally in the "
                       + "background");
+              startTask.setRunConfig(appengineExtension.getRun());
+              startTask.setDevAppServerLoggingDir(
+                  new File(project.getBuildDir(), DEV_APP_SERVER_OUTPUT_DIR_NAME));
               startTask.dependsOn(tasks.named(BasePlugin.ASSEMBLE_TASK_NAME));
             });
 
@@ -232,27 +229,14 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
               stopTask.setGroup(APP_ENGINE_STANDARD_TASK_GROUP);
               stopTask.setDescription(
                   "Stop a locally running App Engine standard environment application");
+              stopTask.setRunConfig(appengineExtension.getRun());
             });
 
     project.afterEvaluate(
         project -> {
-          run.configure(
-              task -> {
-                task.setRunConfig(runExtension);
-                task.setDevServers(cloudSdkOperations.getDevServers());
-              });
-          start.configure(
-              task -> {
-                task.setRunConfig(runExtension);
-                task.setDevServers(cloudSdkOperations.getDevServers());
-                task.setDevAppServerLoggingDir(
-                    new File(project.getBuildDir(), DEV_APP_SERVER_OUTPUT_DIR_NAME));
-              });
-          stop.configure(
-              task -> {
-                task.setRunConfig(runExtension);
-                task.setDevServers(cloudSdkOperations.getDevServers());
-              });
+          run.configure(task -> task.setDevServers(cloudSdkOperations.getDevServers()));
+          start.configure(task -> task.setDevServers(cloudSdkOperations.getDevServers()));
+          stop.configure(task -> task.setDevServers(cloudSdkOperations.getDevServers()));
         });
   }
 }
