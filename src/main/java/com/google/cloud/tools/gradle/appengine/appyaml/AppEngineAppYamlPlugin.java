@@ -46,7 +46,6 @@ public class AppEngineAppYamlPlugin implements Plugin<Project> {
 
   private Project project;
   private AppEngineAppYamlExtension appengineExtension;
-  private StageAppYamlExtension stageExtension;
 
   @Override
   public void apply(Project project) {
@@ -65,7 +64,7 @@ public class AppEngineAppYamlPlugin implements Plugin<Project> {
 
   private void configureExtensions() {
     // create the app.yaml staging extension and set defaults.
-    stageExtension = appengineExtension.getStage();
+    StageAppYamlExtension stageExtension = appengineExtension.getStage();
     File defaultStagedAppDir = new File(project.getBuildDir(), STAGED_APP_DIR_NAME);
     stageExtension.setStagingDirectory(defaultStagedAppDir);
     stageExtension.setAppEngineDirectory(new File(project.getProjectDir(), "src/main/appengine"));
@@ -137,9 +136,8 @@ public class AppEngineAppYamlPlugin implements Plugin<Project> {
               task.setGroup(APP_ENGINE_APP_YAML_TASK_GROUP);
               task.setDescription("Stage an App Engine app.yaml based project for deployment");
               task.dependsOn(BasePlugin.ASSEMBLE_TASK_NAME);
+              task.setStagingConfig(appengineExtension.getStage());
             });
-    project.afterEvaluate(
-        project -> stage.configure(task -> task.setStagingConfig(stageExtension)));
 
     tasks
         .named(AppEngineCorePluginConfiguration.DEPLOY_TASK_NAME)

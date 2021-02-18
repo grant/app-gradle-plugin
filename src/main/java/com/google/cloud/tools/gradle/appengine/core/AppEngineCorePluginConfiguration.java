@@ -254,21 +254,19 @@ public class AppEngineCorePluginConfiguration {
       Class<? extends BaseDeployTask> taskClass,
       String taskDescription,
       boolean injectDeployExtension) {
-    TaskProvider<? extends BaseDeployTask> taskProvider =
-        project
-            .getTasks()
-            .register(
-                taskName,
-                taskClass,
-                task -> {
-                  task.setGroup(taskGroup);
-                  task.setDescription(taskDescription);
-                });
+    project
+        .getTasks()
+        .register(
+            taskName,
+            taskClass,
+            task -> {
+              task.setGroup(taskGroup);
+              task.setDescription(taskDescription);
 
-    if (injectDeployExtension) {
-      project.afterEvaluate(
-          project -> taskProvider.configure(task -> task.setDeployExtension(deployExtension)));
-    }
+              if (injectDeployExtension) {
+                task.setDeployExtension(deployExtension);
+              }
+            });
   }
 
   private void createShowConfigurationTask() {
