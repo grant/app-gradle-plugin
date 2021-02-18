@@ -149,17 +149,9 @@ public class AppEngineStandardPlugin implements Plugin<Project> {
               task.dependsOn(WarPlugin.WAR_TASK_NAME);
               task.setGroup(APP_ENGINE_STANDARD_TASK_GROUP);
               task.setDescription("Explode a war into a directory");
+              task.setWarFile(
+                  tasks.withType(War.class).named("war").map(war -> war.getArchivePath()));
             });
-
-    project.afterEvaluate(
-        project ->
-            explodeWar.configure(
-                task ->
-                    task.setWarFile(
-                        tasks
-                            .withType(War.class)
-                            .getByName((WarPlugin.WAR_TASK_NAME))
-                            .getArchivePath())));
 
     tasks.named(BasePlugin.ASSEMBLE_TASK_NAME).configure(task -> task.dependsOn(explodeWar));
   }

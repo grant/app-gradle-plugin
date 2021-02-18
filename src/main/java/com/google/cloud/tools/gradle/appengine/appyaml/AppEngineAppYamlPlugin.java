@@ -90,11 +90,11 @@ public class AppEngineAppYamlPlugin implements Plugin<Project> {
           // we can only set the default location of "archive" after project evaluation (callback)
           if (stageExtension.getArtifact() == null) {
             if (project.getPlugins().hasPlugin(WarPlugin.class)) {
-              War war = tasks.withType(War.class).getByName("war");
-              stageExtension.setArtifact(war.getArchivePath());
+              stageExtension.setArtifact(
+                  tasks.withType(War.class).named("war").map(war -> war.getArchivePath()));
             } else if (project.getPlugins().hasPlugin(JavaPlugin.class)) {
-              Jar jar = tasks.withType(Jar.class).getByName("jar");
-              stageExtension.setArtifact(jar.getArchivePath());
+              stageExtension.setArtifact(
+                  tasks.withType(Jar.class).named("jar").map(jar -> jar.getArchivePath()));
             } else {
               throw new GradleException("Could not find JAR or WAR configuration");
             }
